@@ -5,7 +5,6 @@ Parser::Parser(std::vector<Token> tokens) : tokens_list(std::move(tokens)) {}
 
 Token Parser::peek() {
     if (current_token_idx >= tokens_list.size()) {
-        // This should ideally not happen if END_OF_FILE is always last
         return Token(TokenType::END_OF_FILE, ""); 
     }
     return tokens_list[current_token_idx];
@@ -15,7 +14,6 @@ Token Parser::advance() {
     if (current_token_idx < tokens_list.size()) {
         return tokens_list[current_token_idx++];
     }
-    // Return last token (should be EOF) if already past the end
     return tokens_list.back(); 
 }
 
@@ -24,7 +22,7 @@ Token Parser::consume(TokenType type, const std::string& message) {
     if (current_token.type == type) {
         return advance();
     }
-    // Construct a more informative error message
+    
     std::string error_msg = "Parser Error: " + message + ". Got token type " +
                             std::to_string(static_cast<int>(current_token.type)) +
                             " ('" + current_token.text + "') instead of expected type " +
@@ -43,29 +41,23 @@ bool Parser::match(TokenType type) {
 std::unique_ptr<ProgramNode> Parser::parse_program() {
     auto program_node = std::make_unique<ProgramNode>();
 
-    // 1. Parse 'use' declarations (must come first)
     while (peek().type == TokenType::KEYWORD_USE) {
-        program_node->use_declarations.push_back(parse_use_declaration()); // THIS LINE SHOULD NOW WORK
+        program_node->use_declarations.push_back(parse_use_declaration()); 
     }
 
-    // 2. Parse regular statements
     while (peek().type != TokenType::END_OF_FILE && peek().type != TokenType::UNKNOWN) {
         try {
-            // Check if the current token can start a known statement
             if (peek().type == TokenType::KEYWORD_NUMBER || peek().type == TokenType::KEYWORD_LNUMBER ||
                 peek().type == TokenType::KEYWORD_TEXT || peek().type == TokenType::KEYWORD_LOGIC ||
                 peek().type == TokenType::KEYWORD_RIEL || peek().type == TokenType::KEYWORD_SAYS) {
                  program_node->statements.push_back(parse_statement());
             }
-            // Add IDENTIFIER for potential assignment later
-            // else if (peek().type == TokenType::IDENTIFIER) {
-            // program_node->statements.push_back(parse_statement());
-            // }
+            
             else {
-                 if (peek().type != TokenType::END_OF_FILE) { 
-                    throw std::runtime_error("Parser Error: Unexpected token '" + peek().text + "' found at top level after 'use' declarations.");
-                 }
-                 break;
+                if (peek().type != TokenType::END_OF_FILE) { 
+                    throw std::runtime_error("Parser Error: Unexpected token '" +   peek().text + "' found at top level after 'use' declarations.");
+                }
+                break;
             }
         } catch (const std::runtime_error& e) {
             std::cerr << e.what() << std::endl;
@@ -88,18 +80,14 @@ std::unique_ptr<StatementNode> Parser::parse_statement() {
     } else if (current_type == TokenType::KEYWORD_SAYS) {
         return parse_says_statement();
     }
-    // Add other statement types here (e.g., if, while, function calls if IDENTIFIER can start one)
-    // else if (current_type == TokenType::IDENTIFIER) {
-        // Could be an assignment statement if we distinguish it from declaration
-        // return parse_assignment_statement();
-    // }
+    
     else {
         throw std::runtime_error("Parser Error: Unexpected token '" + peek().text + "' at start of a statement.");
     }
 }
 
 std::unique_ptr<VariableDeclarationNode> Parser::parse_variable_declaration_statement() {
-    Token type_token = advance(); // Consume type keyword (number, text, etc.)
+    Token type_token = advance(); 
     HScriptType var_hscript_type;
 
     switch (type_token.type) {
@@ -108,7 +96,7 @@ std::unique_ptr<VariableDeclarationNode> Parser::parse_variable_declaration_stat
         case TokenType::KEYWORD_TEXT:    var_hscript_type = HScriptType::TEXT;    break;
         case TokenType::KEYWORD_LOGIC:   var_hscript_type = HScriptType::LOGIC;   break;
         case TokenType::KEYWORD_RIEL:    var_hscript_type = HScriptType::RIEL;    break;
-        default: // Should not happen if called correctly
+        default: 
             throw std::runtime_error("Parser Internal Error: Invalid type keyword in var declaration.");
     }
 
@@ -129,30 +117,26 @@ std::unique_ptr<SaysStatementNode> Parser::parse_says_statement() {
     return std::make_unique<SaysStatementNode>(std::move(expr));
 }
 
-// --- Expression Parsing (with precedence) ---
-// Expression -> Comparison
 std::unique_ptr<ExprNode> Parser::parse_expression() {
     return parse_comparison();
 }
 
-// Comparison -> Addition ( QUESTION_EQUALS Addition )*
 std::unique_ptr<ExprNode> Parser::parse_comparison() {
     std::unique_ptr<ExprNode> left = parse_addition();
 
     while (peek().type == TokenType::QUESTION_EQUALS) {
-        Token operator_token = advance(); // Consume '?='
+        Token operator_token = advance(); 
         std::unique_ptr<ExprNode> right = parse_addition();
         left = std::make_unique<BinaryOpNode>(std::move(left), operator_token, std::move(right));
     }
     return left;
 }
 
-// Addition -> Factor ( PLUS Factor )*  (Note: For more operators, this becomes Term (Op Term)*)
 std::unique_ptr<ExprNode> Parser::parse_addition() {
     std::unique_ptr<ExprNode> left = parse_factor();
 
-    while (peek().type == TokenType::PLUS) { // Add other additive ops (MINUS) here if needed
-        Token operator_token = advance(); // Consume '+'
+    while (peek().type == TokenType::PLUS) { 
+        Token operator_token = advance(); 
         std::unique_ptr<ExprNode> right = parse_factor();
         left = std::make_unique<BinaryOpNode>(std::move(left), operator_token, std::move(right));
     }
@@ -182,29 +166,26 @@ std::string Parser::parse_header_path() {
 std::unique_ptr<UseNode> Parser::parse_use_declaration() {
     consume(TokenType::KEYWORD_USE, "Expected 'use' keyword.");
     consume(TokenType::LT, "Expected '<' after 'use' keyword.");
-    
     std::string header_name = parse_header_path();
-    
     consume(TokenType::GT, "Expected '>' after include path in 'use' statement.");
     consume(TokenType::SEMICOLON, "Expected ';' after 'use' statement.");
     
     return std::make_unique<UseNode>(header_name, true /* is_system_include */);
 }
 
-// Factor -> INTEGER_LITERAL | DOUBLE_LITERAL | STRING_LITERAL | KEYWORD_TRUE | KEYWORD_FALSE | IDENTIFIER | LPAREN Expression RPAREN
+
 std::unique_ptr<ExprNode> Parser::parse_factor() {
     Token current_token = peek();
 
     if (current_token.type == TokenType::INTEGER_LITERAL) {
         advance();
-        // The value in Token is already std::variant<..., int, long long, ...>
-        // We can try to get long long if available, otherwise int.
+        
         if (std::holds_alternative<long long>(current_token.value)) {
             return std::make_unique<IntegerLiteralNode>(std::get<long long>(current_token.value));
         } else if (std::holds_alternative<int>(current_token.value)) {
              return std::make_unique<IntegerLiteralNode>(static_cast<long long>(std::get<int>(current_token.value)));
         }
-        // Fallback or error if not int or long long, though lexer should ensure this.
+        
         throw std::runtime_error("Parser Error: Expected int or long long value in INTEGER_LITERAL token.");
 
     } else if (current_token.type == TokenType::DOUBLE_LITERAL) {
