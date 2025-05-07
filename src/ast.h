@@ -81,6 +81,47 @@ struct StatementNode {
     virtual std::string to_string() const = 0;
 };
 
+// Block statement for grouped statements within braces
+struct BlockStatementNode : StatementNode {
+    std::vector<std::unique_ptr<StatementNode>> statements;
+    
+    BlockStatementNode() {}  // Empty block
+    explicit BlockStatementNode(std::vector<std::unique_ptr<StatementNode>> stmts)
+        : statements(std::move(stmts)) {}
+        
+    std::string to_string() const override {
+        std::string result = "{\n";
+        for (const auto& stmt : statements) {
+            result += "  " + stmt->to_string() + "\n";
+        }
+        result += "}";
+        return result;
+    }
+};
+
+// If-else statement node
+struct IfStatementNode : StatementNode {
+    std::unique_ptr<ExprNode> condition;
+    std::unique_ptr<StatementNode> then_branch;
+    std::unique_ptr<StatementNode> else_branch;  // Optional, can be nullptr
+    
+    IfStatementNode(std::unique_ptr<ExprNode> cond, 
+                    std::unique_ptr<StatementNode> then_stmt,
+                    std::unique_ptr<StatementNode> else_stmt = nullptr)
+        : condition(std::move(cond)), 
+          then_branch(std::move(then_stmt)), 
+          else_branch(std::move(else_stmt)) {}
+          
+    std::string to_string() const override {
+        std::string result = "if (" + condition->to_string() + ") " + 
+                             then_branch->to_string();
+        if (else_branch) {
+            result += " else " + else_branch->to_string();
+        }
+        return result;
+    }
+};
+
 struct VariableDeclarationNode : StatementNode {
     HScriptType var_type;
     std::string identifier_name;

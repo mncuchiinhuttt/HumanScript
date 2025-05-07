@@ -49,10 +49,10 @@ std::unique_ptr<ProgramNode> Parser::parse_program() {
         try {
             if (peek().type == TokenType::KEYWORD_NUMBER || peek().type == TokenType::KEYWORD_LNUMBER ||
                 peek().type == TokenType::KEYWORD_TEXT || peek().type == TokenType::KEYWORD_LOGIC ||
-                peek().type == TokenType::KEYWORD_RIEL || peek().type == TokenType::KEYWORD_SAYS) {
+                peek().type == TokenType::KEYWORD_RIEL || peek().type == TokenType::KEYWORD_SAYS ||
+                peek().type == TokenType::KEYWORD_IF || peek().type == TokenType::LBRACE) {
                  program_node->statements.push_back(parse_statement());
             }
-            
             else {
                 if (peek().type != TokenType::END_OF_FILE) { 
                     throw std::runtime_error("Parser Error: Unexpected token '" +   peek().text + "' found at top level after 'use' declarations.");
@@ -79,9 +79,11 @@ std::unique_ptr<StatementNode> Parser::parse_statement() {
         return parse_variable_declaration_statement();
     } else if (current_type == TokenType::KEYWORD_SAYS) {
         return parse_says_statement();
-    }
-    
-    else {
+    } else if (current_type == TokenType::KEYWORD_IF) {
+        return parse_if_statement();
+    } else if (current_type == TokenType::LBRACE) {
+        return parse_block_statement();
+    } else {
         throw std::runtime_error("Parser Error: Unexpected token '" + peek().text + "' at start of a statement.");
     }
 }
@@ -212,4 +214,40 @@ std::unique_ptr<ExprNode> Parser::parse_factor() {
         throw std::runtime_error("Parser Error: Unexpected token '" + current_token.text +
                                  "' when expecting a factor (literal, identifier, or parentheses).");
     }
+}
+
+std::unique_ptr<IfStatementNode> Parser::parse_if_statement() {
+    consume(TokenType::KEYWORD_IF, "Expected 'if' keyword");
+    consume(TokenType::LPAREN, "Expected '(' after 'if' keyword");
+    
+    std::unique_ptr<ExprNode> condition = parse_expression();
+    
+    consume(TokenType::RPAREN, "Expected ')' after if condition");
+    
+    std::unique_ptr<StatementNode> then_branch = parse_statement();
+    
+    std::unique_ptr<StatementNode> else_branch = nullptr;
+    if (match(TokenType::KEYWORD_ELSE)) {
+        else_branch = parse_statement();
+    }
+    
+    return std::make_unique<IfStatementNode>(
+        std::move(condition), 
+        std::move(then_branch), 
+        std::move(else_branch)
+    );
+}
+
+std::unique_ptr<BlockStatementNode> Parser::parse_block_statement() {
+    consume(TokenType::LBRACE, "Expected '{' at start of block");
+    
+    std::vector<std::unique_ptr<StatementNode>> statements;
+    
+    while (peek().type != TokenType::RBRACE && peek().type != TokenType::END_OF_FILE) {
+        statements.push_back(parse_statement());
+    }
+    
+    consume(TokenType::RBRACE, "Expected '}' at end of block");
+    
+    return std::make_unique<BlockStatementNode>(std::move(statements));
 }

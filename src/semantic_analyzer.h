@@ -24,6 +24,8 @@ private:
     void visit(const StatementNode* stmt);
     void visit(const VariableDeclarationNode* stmt);
     void visit(const SaysStatementNode* stmt);
+    void visit(const IfStatementNode* stmt);
+    void visit(const BlockStatementNode* stmt);
 
     HScriptType visit_and_get_type(const ExprNode* expr); 
     HScriptType visit_and_get_type(const IntegerLiteralNode* expr);

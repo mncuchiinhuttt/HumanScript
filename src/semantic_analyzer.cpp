@@ -20,9 +20,11 @@ void SemanticAnalyzer::visit(const StatementNode* stmt) {
         visit(var_decl_stmt);
     } else if (auto says_stmt = dynamic_cast<const SaysStatementNode*>(stmt)) {
         visit(says_stmt);
-    }
-    
-    else {
+    } else if (auto if_stmt = dynamic_cast<const IfStatementNode*>(stmt)) {
+        visit(if_stmt);
+    } else if (auto block_stmt = dynamic_cast<const BlockStatementNode*>(stmt)) {
+        visit(block_stmt);
+    } else {
         throw std::runtime_error("Semantic Analyzer: Unknown statement type encountered.");
     }
 }
@@ -53,6 +55,38 @@ void SemanticAnalyzer::visit(const SaysStatementNode* stmt) {
     }
     
     std::cout << "Semantic Info: 'says' statement with expression of type " << hscript_type_to_string(expr_type) << std::endl;
+}
+
+void SemanticAnalyzer::visit(const IfStatementNode* stmt) {
+    // Check condition is a logical expression
+    HScriptType condition_type = visit_and_get_type(stmt->condition.get());
+    
+    if (condition_type != HScriptType::LOGIC) {
+        throw std::runtime_error("Semantic Error: If statement condition must be of type 'logic', got " + 
+                                 hscript_type_to_string(condition_type) + " instead.");
+    }
+    
+    // Check the then branch
+    visit(stmt->then_branch.get());
+    
+    // Check the else branch if it exists
+    if (stmt->else_branch) {
+        visit(stmt->else_branch.get());
+    }
+    
+    std::cout << "Semantic Info: Processed if statement" << std::endl;
+}
+
+void SemanticAnalyzer::visit(const BlockStatementNode* stmt) {
+    // For a simple language version, we're not implementing block-level scope
+    // All variables are in the global scope
+    
+    // Visit all statements in the block
+    for (const auto& s : stmt->statements) {
+        visit(s.get());
+    }
+    
+    std::cout << "Semantic Info: Processed block statement" << std::endl;
 }
 
 HScriptType SemanticAnalyzer::visit_and_get_type(const ExprNode* expr_const) {

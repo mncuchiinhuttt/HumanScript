@@ -16,6 +16,8 @@ enum class TokenType {
     KEYWORD_TRUE,      // "true"
     KEYWORD_FALSE,     // "false"
     KEYWORD_USE,       // "use"
+    KEYWORD_IF,        // "if"
+    KEYWORD_ELSE,      // "else"
 
     LT,               // "<"
     GT,               // ">"
@@ -41,6 +43,8 @@ enum class TokenType {
     SEMICOLON,       // ";"
     LPAREN,          // "("
     RPAREN,          // ")"
+    LBRACE,          // "{"
+    RBRACE,          // "}"
     // No <, > for "use" yet, assuming it's removed for this fresh start
 
     // Meta

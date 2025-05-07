@@ -25,6 +25,8 @@ private:
     std::unique_ptr<StatementNode> parse_statement();
     std::unique_ptr<VariableDeclarationNode> parse_variable_declaration_statement();
     std::unique_ptr<SaysStatementNode> parse_says_statement();
+    std::unique_ptr<IfStatementNode> parse_if_statement();
+    std::unique_ptr<BlockStatementNode> parse_block_statement();
     
     std::unique_ptr<ExprNode> parse_expression();       
     std::unique_ptr<ExprNode> parse_comparison();       

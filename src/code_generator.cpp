@@ -111,6 +111,10 @@ void CodeGenerator::visit(const StatementNode* stmt) {
         visit(var_decl_stmt);
     } else if (auto says_stmt = dynamic_cast<const SaysStatementNode*>(stmt)) {
         visit(says_stmt);
+    } else if (auto if_stmt = dynamic_cast<const IfStatementNode*>(stmt)) {
+        visit(if_stmt);
+    } else if (auto block_stmt = dynamic_cast<const BlockStatementNode*>(stmt)) {
+        visit(block_stmt);
     }
     // else if (auto assign_stmt = dynamic_cast<const AssignmentNode*>(stmt)) {
     //     visit(assign_stmt);
@@ -153,6 +157,51 @@ void CodeGenerator::visit(const SaysStatementNode* stmt) {
     output_stream << ") << std::endl;\n";
 }
 
+void CodeGenerator::visit(const IfStatementNode* stmt) {
+    // Generate condition with parentheses for clarity
+    output_stream << "if (";
+    output_stream << generate_cpp_for_expression(stmt->condition.get(), HScriptType::LOGIC);
+    output_stream << ") ";
+    
+    // For the then branch
+    if (dynamic_cast<const BlockStatementNode*>(stmt->then_branch.get())) {
+        // If it's already a block, just visit it (it will generate its own braces)
+        visit(stmt->then_branch.get());
+    } else {
+        // If it's a single statement, wrap it in braces for consistency
+        output_stream << "{\n        ";
+        visit(stmt->then_branch.get());
+        output_stream << "    }";
+    }
+    
+    // For the else branch if it exists
+    if (stmt->else_branch) {
+        output_stream << " else ";
+        if (dynamic_cast<const BlockStatementNode*>(stmt->else_branch.get())) {
+            // If it's already a block, just visit it
+            visit(stmt->else_branch.get());
+        } else {
+            // If it's a single statement, wrap it in braces for consistency
+            output_stream << "{\n        ";
+            visit(stmt->else_branch.get());
+            output_stream << "    }";
+        }
+    }
+    
+    output_stream << "\n";
+}
+
+void CodeGenerator::visit(const BlockStatementNode* stmt) {
+    output_stream << "{\n";
+    
+    // Visit each statement in the block with increased indentation
+    for (const auto& s : stmt->statements) {
+        output_stream << "        "; // Extra indentation for block statements
+        visit(s.get());
+    }
+    
+    output_stream << "    }";
+}
 
 // --- Expression Code Generation Helper ---
 std::string CodeGenerator::generate_cpp_for_expression(const ExprNode* expr, HScriptType expected_context_type) {

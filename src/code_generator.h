@@ -23,6 +23,8 @@ private:
     void visit(const StatementNode* stmt);
     void visit(const VariableDeclarationNode* stmt);
     void visit(const SaysStatementNode* stmt);
+    void visit(const IfStatementNode* stmt);
+    void visit(const BlockStatementNode* stmt);
     // void visit(const AssignmentNode* stmt); // If added later
 
     // Expression code generation (internal, called by generate_cpp_for_expression)

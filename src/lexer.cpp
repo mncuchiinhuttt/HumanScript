@@ -52,7 +52,8 @@ Token Lexer::make_identifier_or_keyword(const std::string& ident_text) {
         {"text", TokenType::KEYWORD_TEXT},     {"logic", TokenType::KEYWORD_LOGIC},
         {"riel", TokenType::KEYWORD_RIEL},     {"says", TokenType::KEYWORD_SAYS},
         {"true", TokenType::KEYWORD_TRUE},     {"false", TokenType::KEYWORD_FALSE},
-        {"use", TokenType::KEYWORD_USE}
+        {"use", TokenType::KEYWORD_USE},       {"if", TokenType::KEYWORD_IF},
+        {"else", TokenType::KEYWORD_ELSE}
     };
 
     auto it = keywords.find(ident_text);
@@ -163,6 +164,8 @@ Token Lexer::get_next_token() {
         case ';': advance(); return Token(TokenType::SEMICOLON, ";");
         case '(': advance(); return Token(TokenType::LPAREN, "(");
         case ')': advance(); return Token(TokenType::RPAREN, ")");
+        case '{': advance(); return Token(TokenType::LBRACE, "{");
+        case '}': advance(); return Token(TokenType::RBRACE, "}");
         case '<': advance(); return Token(TokenType::LT, "<");
         case '>': advance(); return Token(TokenType::GT, ">");
         case '.': advance(); return Token(TokenType::DOT, ".");

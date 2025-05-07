@@ -4,3 +4,9 @@ use <algorithm>;
 lnumber age := 18;
 lnumber khangage := 10;
 says(age ?= khangage);
+
+if (age ?= khangage) {
+    says "gay";
+} else {
+    says "no gay";
+}
