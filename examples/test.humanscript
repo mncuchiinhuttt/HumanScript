@@ -1,0 +1,6 @@
+use <iostream>;
+use <algorithm>;
+
+lnumber age := 18;
+lnumber khangage := 10;
+says(age ?= khangage);

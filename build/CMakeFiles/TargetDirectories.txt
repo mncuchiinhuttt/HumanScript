@@ -1,0 +1,3 @@
+/Users/vominhlong/HumanScript/build/CMakeFiles/humanscript_compiler.dir
+/Users/vominhlong/HumanScript/build/CMakeFiles/edit_cache.dir
+/Users/vominhlong/HumanScript/build/CMakeFiles/rebuild_cache.dir
